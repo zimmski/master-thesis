@@ -1,0 +1,67 @@
+\chapter{Introduction}
+\label{chapter:introduction}
+
+In this chapter we introduce the main topics and motivation, followed by the goals, contributions and the chapter structure of this thesis.
+
+\section{Motivation}
+\label{sec:motivation}
+
+Testing software is a complicated and cumbersome but necessary task to verify the correctness of a program. Nowadays software developers usually lean to exercise testing using automated measures, such as writing and executing unit, integration and system tests, instead of or additionally to manually testing the program under test. Even though such automation has clear advantages for catching regressions of modifications to existing programs, developers often tend to only utilize test data that they expect to be interesting to a program. This leads to the problem that only expected behavior is tested by such automated measures. However, given enough time, users of a program will exercise unexpected behavior too, which can lead to program crashes, false results or vulnerabilities. Such negative outcomes make it necessary to invest more time into software testing, to increase the probability of covering all corner-cases of the program under test. However necessary such thorough testing is, it is no guarantee to find all problems of a program, and it can be therefore seen as one of the more bothersome tasks of developing software. Fortunately, automated techniques exist to at least help with the task of thorough testing. One such technique is fuzz testing, or simply fuzzing, which was introduced by Miller et al.~\cite{miller1995fuzz}. Fuzzing, in its most basic form, generates unstructured random data as input for the execution of a program. Even tough such data can lead to early success in testing software for unexpected behavior~\cite{miller1995fuzz}, it depends on pure luck given the underlying randomness, and is therefore prone to poor coverage for the program under test. Each condition of a program reduces the effectiveness of unstructured random generated data to reach certain program areas, since the data is more likely to be invalidated with each condition. To overcome this limitation, models can be additionally utilized to generate more structured data to cover deeper execution paths, which is therefore more likely to uncover problems of the program under test.
+
+However useful fuzzing is to generate interesting data, the results can often be largely sized. Even if data reproducibly exercises a problem, its size becomes a limiting factor for the developer, since more context has to be included for fixing the program. Debugging the given problem can be aided by simply reducing the size of the context. Hence, by trimming data of irrelevant parts so that it still reproduces the same problem. This procedure is called delta-debugging and was introduced by Zeller in~\cite{zeller2009programs}. However, an unstructured reduction of the given data, can lead to invalidating a condition of the underlying execution path. Utilizing a model of how expected data is structured, can help to systematically reduce huge data and keep it valid, to at least increase the probability of hitting the same problem as the unreduced data.
+
+This thesis explores the assumption that both fuzzing and delta-debugging can strongly benefit from utilizing the same model which represents expected data for a program under test. The subsequent Section~\ref{sec:goalOfThesis} substantiates the goals of this thesis for the exploration of this assumption and lists restrictions to these goals.
+
+\section{Goal of Thesis}
+\label{sec:goalOfThesis}
+
+Fuzzing and delta-debugging are strong techniques to aid testing and debugging of software programs. Many implementations for these techniques exist but suffer from the following two distinct disadvantages:
+
+\begin{enumerate}
+\item Most implementations are either frameworks to implement specialized models in the framework's programming language, or programs with the sole purpose of either fuzzing or delta-debugging with hard-coded models. Programming is therefore a seemingly required skill to utilize both techniques. This raises the following questions: What are the common data structures and algorithms that can be shared to utilize fuzzing and delta-debugging? What are the underlying concepts that are necessary to define arbitrary models? How can such definitions be represented to make fuzzing and delta-debugging of these models available to non-programmers?
+\item Additionally, implementations for fuzzing and delta-debugging commonly utilize only one of the two techniques inside a single application. This raises the following question: How can a model be defined without any additional tweaks, so that both techniques can operate on it within the same application?
+\end{enumerate}
+
+These aforementioned questions are the foundation of this thesis and can be formulated as the following main goals:
+
+\begin{enumerate}
+\item Define the main concepts, data structures, algorithms and interfaces that are necessary to utilize a common model for applying fuzzing and delta-debugging.
+\item Additionally, conceive a declarative language for defining such models that is usable without the knowledge of a programming language.
+\end{enumerate}
+
+In order to keep within reasonable limits, this thesis focuses, additional to the aforementioned main goals, on the following subgoals:
+
+\begin{itemize}
+\item Implement generative fuzzing for the conceived models, which allows the generation of valid data that can be used for positive testing.
+\item Make it possible to define at least one sophisticated data model to directly compare this thesis to other fuzzing implementations. The sophisticated format chosen for this purpose is the AIGER ASCII format (AAG) defined at \footnote{\url{http://fmv.jku.at/aiger/FORMAT}}. The format is capable of defining and-inverter graphs that allow the definition of combinational circuits.
+\item Implement the necessary interfaces to allow fuzzing and delta-debugging of external programs.
+\item Allow and showcase delta-debugging for simple data models but not necessarily for sophisticated models.
+\end{itemize}
+
+\section{Contributions}
+\label{sec:contributions}
+
+The following list is an excerpt of the contributions that were made in consequence of this thesis:
+
+\begin{itemize}
+\item One of the main contributions is the implementation of \textsc{Tavor}, a now established framework and tool, which utilizes a common model for fuzzing and delta-debugging. The implementation has been open sourced using the permissive MIT license~\footnote{\url{https://github.com/zimmski/tavor}}.
+\item The conception and implementation of the \textsc{Tavor format} for the definition of data, such as file formats and protocols, has also been open sourced along with \textsc{Tavor}~\footnote{\url{https://github.com/zimmski/tavor/blob/master/doc/format.md}}.
+\item Additional to \textsc{Tavor}, other open source contributions have been made. The project \textsc{go-mutesting}~\footnote{\url{https://github.com/zimmski/go-mutesting}}, a mutation testing framework and tool for \textsc{Go} source code, has been established and is to this date the most widely used mutation testing tool in its area. Large contributions have been made to the extensively used \textsc{Go} package go-flags~\footnote{\url{https://github.com/jessevdk/go-flags}}, a command line option and configuration parser, which lead to a maintainership of this package. Many contributions to the widely adopted \textsc{Go} source code static-analysis projects errcheck~\footnote{\url{https://github.com/kisielk/errcheck}} and golint~\footnote{\url{https://github.com/golang/lint}} have been made. The project go-leak~\footnote{\url{https://github.com/zimmski/go-leak}}, a \textsc{Go} package to identify resource leaks, has been established as no implementation existed during the implementation of \textsc{Tavor}.
+\item Patches to the \textsc{Go} project~\footnote{\url{https://golang.org/}} have been made of which one of them fixed a silent corruption of the internal structure of the container/list package. Additionally, the identification of inconsistencies in the encoding/json package lead to patches to the \textsc{Go} package.
+\item Contributing \textsc{Tavor} to the open source community lead to a mentoring position for the lowRISC organization~\footnote{\url{http://www.lowrisc.org/}} in the Google Summer of Code 2015. As a result one student used \textsc{Tavor} for generating assembly test cases for the RISC-V architecture.
+\end{itemize}
+
+\section{Outline}
+\label{sec:outline}
+
+The remainder of this thesis is structured as follows:
+
+\begin{itemize}
+\item In Chapter~\ref{chapter:background} we explain the terminology as well as the main topics and techniques of this thesis.
+\item In Chapter~\ref{chapter:tavorFramework} we present the \textsc{Tavor framework} by describing its main design goals, components, data structures and algorithms.
+\item In Chapter~\ref{chapter:tavorFormat} we introduce the \textsc{Tavor format}: an EBNF-like notation which allows the definition of data, such as file formats and protocols, without the need of programming.
+\item In Chapter~\ref{chapter:tavorCLI} we present the \textsc{Tavor CLI}: the user interface for non-programmers to utilize capabilities such as fuzzing and delta-debugging of the \textsc{Tavor framework}.
+\item In Chapter~\ref{chapter:goMutesting} we introduce \textsc{go-mutesting}: a framework for performing mutation testing on source code of the programming language \textsc{Go}.
+\item In Chapter~\ref{chapter:evaluation} we provide an evaluation of the implemented solutions under different scenarios.
+\item In Chapter~\ref{chapter:conclusion} we discuss the conclusions we could draw from this thesis and give an outlook for possible future extensions.
+\end{itemize}

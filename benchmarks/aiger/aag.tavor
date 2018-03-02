@@ -1,0 +1,66 @@
+/*
+
+AAG tavor format based on http://fmv.jku.at/aiger/FORMAT
+
+*/
+
+$Literal Sequence = start: 2,
+                    step: 2
+
+ExistingLiteral = 0, // false
+                | 1, // true
+                | $Literal.Existing,
+                | ${Literal.Existing + 1} // +1 means a NOT for this input
+
+ExistingLiteralAnd = 0, // false
+                   | 1, // true
+                   | ${Literal.Existing not in (AndCycle)},
+                   | ${Literal.Existing not in (AndCycle) + 1} // +1 means a NOT for this input
+
+// AndCycle finds all paths beginning from the variable andLiteral
+AndCycle = ${andList.Reference path from (andLiteral) over (e.Item(0)) connect by (e.Item(2) / 2 * 2, e.Item(4) / 2 * 2) without (0, 1)}
+
+Inputs = *(Input)
+Input = $Literal.Next "\n"
+
+Latches = *(Latch)
+Latch = $Literal.Next " " ExistingLiteral "\n"
+
+Outputs = *(Output)
+Output = ExistingLiteral "\n"
+
+Ands = *(And)
+And = $Literal.Next<andLiteral> " " ExistingLiteralAnd " " ExistingLiteralAnd "\n"
+
+Header = "aag ",
+         (,                                                  // M
+           ${Inputs.Count + Latches.Count + Ands.Count},
+         | ${Inputs.Count + Latches.Count + Ands.Count + 1}, // M does not have to be exactly I + L + A there can be unused Literals
+         ) " ",
+         $Inputs.Count " ",                                  // I
+         $Latches.Count " " ,                                // L
+         $Outputs.Count " ",                                 // O
+         $Ands.Count "\n"                                    // A
+
+Body = Inputs,
+       Latches,
+       Outputs,
+       Ands<andList>
+
+Comments = "c\n",
+           *(Comment)
+Comment = *([\w ]) "\n"
+
+Symbols = +0,$Inputs.Count(SymbolInput),
+          +0,$Latches.Count(SymbolLatch),
+          +0,$Outputs.Count(SymbolOutput)
+
+SymbolInput = "i" $Inputs.Unique<=e> $e.Index " " +([\w ]) "\n"
+SymbolLatch = "l" $Latches.Unique<=e> $e.Index " " +([\w ]) "\n"
+SymbolOutput = "o" $Outputs.Unique<=e> $e.Index " " +([\w ]) "\n"
+
+START = $Literal.Reset,
+        Header,
+        Body,
+        ?(Symbols),
+        ?(Comments)

@@ -1,0 +1,9 @@
+- Never start with the name of a product/project/acronym e.g. "Tavor is a ..."
+- Never start a sentence or bullet point with a number
+- URLs should most of the time be put into the references
+- Use \textsc or \texsf (small capitals) for name of product/project/acronym so that they are always the same
+- Never use just the name of a product/project/acronym as a chapter/section heading e.g. "go-mutesting" should be replaced with "The Framework go-mutesting"
+- Never us the word "meaning" as at the beginng of an sentence. The only instance that is OK is the word meaning as a noun in "Bedeutung".
+- Use "Fig.~" instead of "Figure~" and "Sec.~" instead of "Section~" TODO in this sense, what are the abbreviations for chapter, listing, subsection, table, appendix?
+- Use "et al.~" instead of "et al. " or else Latex things that the dot is the beginning of a sentence.
+- Use textemp for new terminology once where it is defined.

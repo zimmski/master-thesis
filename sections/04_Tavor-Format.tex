@@ -1,0 +1,873 @@
+\chapter{\textsc{Tavor Format}}
+\label{chapter:tavorFormat}
+
+The \textsc{Tavor format} is an EBNF-like notation which allows the definition of data, such as file formats and protocols, without the need of programming. It is the default format of the Tavor CLI of Chapter~\ref{chapter:tavorCLI} and supports every feature of the framework, which has been introduced in Chapter~\ref{chapter:tavorFramework}. Each of the demonstrated features of the \textsc{Tavor format} is required to fully define the AIGER format.
+
+The format is Unicode text encoded in UTF-8 and consists of terminal and non-terminal symbols which are called \texttt{tokens} throughout the \textsc{Tavor framework}. A more general definition of \texttt{tokens} can be found in Section~\ref{sec:tokens}.
+
+\section{Token Definition}
+\label{sec:tokenDefinition}
+
+Every \texttt{token} in the format belongs to a definition of \texttt{non-terminal token} which consists of a unique case-sensitive name and its definition part. Both are separated by exactly one equal sign. Syntactical white spaces are ignored. Every \texttt{token definition} is by default declared in one line. A line ends with a new-line character.
+
+To give an example, the format in Listing~\ref{lst:tavorHelloWorld} declares the \texttt{START token} with the \texttt{String Token} \enquote{Hello World} as its definition.
+
+\begin{listing}
+\caption{\textsc{Tavor}'s Hello World}
+\label{lst:tavorHelloWorld}
+\begin{gocode}
+START = "Hello World"
+\end{gocode}
+\end{listing}
+
+\texttt{Token names} have the following constraints: Each \texttt{token name} has to start with a letter, and can only consist of letters, digits and the underscore sign \enquote{\char`_}. Additionally, a \texttt{token name} has to be unique. It is also not allowed to declare a \texttt{token} and never use it. The \texttt{START token} is the only exception, which is used as the entry point of the format. Hence it defines the beginning of the format and is therefore required for every format definition.
+
+Sequential listed \texttt{tokens} in the definition part of a \texttt{token definition} are automatically concatenated. The example in Listing~\ref{lst:concatenationExample} concatenates to the string \enquote{This is a String Token and this 123 was a number token.}.
+
+\begin{listing}
+\caption{Example for a token concatenation}
+\label{lst:concatenationExample}
+\begin{gocode}
+START = "This is a String Token and this " 123 " was a number token."
+\end{gocode}
+\end{listing}
+
+A \texttt{token definition} can be sometimes too long or poorly readable, it can be therefore split into multiple lines by using a comma before the newline character as shown in Listing~\ref{lst:multiLineTokenDefinitionExample}. The \texttt{token definition} ends at the string \enquote{definition.} since there is no comma before the newline character. Listing~\ref{lst:multiLineTokenDefinitionExample} also highlights that syntactical white spaces are ignored and can be used to make a format definition more human-readable.
+
+\begin{listing}
+\caption{Example for a multi-line token definition}
+\label{lst:multiLineTokenDefinitionExample}
+\begin{gocode}
+START = "This",
+        "is",
+        "a",
+        "multi line",
+        "definition."
+\end{gocode}
+\end{listing}
+
+The \textsc{Tavor format} supports two kinds of comments. \texttt{Line comments} start with the character sequence \enquote{//} and end at the next new-line character. \texttt{General comments} start with the character sequence \enquote{/*} and end at the character sequence \enquote{*/}. A general comment can therefore contain new-line characters and can be used between \texttt{token definition} and \texttt{tokens}. Both kinds of comments are illustrated in Listing~\ref{lst:commentsExample}.
+
+\begin{listing}
+\caption{Example for different kinds of comments}
+\label{lst:commentsExample}
+\begin{gocode}
+/*
+
+This is a general comment
+which can have
+multiple lines.
+
+*/
+
+START = "This is a string." // This is a line comment.
+
+// This is also a line comment.
+\end{gocode}
+\end{listing}
+
+\section{Terminal Tokens}
+\label{sec:terminalTokens}
+
+\texttt{Terminal tokens} are the constants of the \textsc{Tavor format}. The format supports two kinds of \texttt{terminal tokens}: numbers and strings. Every other token that is not a \texttt{terminal token}, such as \texttt{tokens} of definitions, is called a \texttt{non-terminal token}.
+
+\texttt{Number tokens} allow only positive decimal integers, which are written as a sequence of digits as shown in Listing~\ref{lst:numberTokenExample}.
+
+\begin{listing}
+\caption{Example for a number token}
+\label{lst:numberTokenExample}
+\begin{gocode}
+START = 123
+\end{gocode}
+\end{listing}
+
+\texttt{String Tokens} are character sequences between double quote characters and can consist of any UTF-8 encoded character except the new-line, the double quote and the backslash characters which have to be escaped with a backslash character. An example can be seen in Listing~\ref{lst:stringTokenExample}.
+
+\begin{listing}
+\caption{Example for a String Token}
+\label{lst:stringTokenExample}
+\begin{gocode}
+START = "The next word is \"quoted\" and next is a new line\n"
+\end{gocode}
+\end{listing}
+
+Since \textsc{Tavor} is using \textsc{Go}'s text parser as foundation of its format parsing, the same rules for \enquote{interpreted string literals} as defined in \textsc{Go}'s language specification~\cite{2017_go_spec} apply to \texttt{String Tokens}.
+
+Empty \texttt{String Token} are forbidden and lead to a format parsing error. The reason for this exceptions is the way \texttt{tokens} are utilized during parsing and delta-debugging, and is described in the repeat groups of Paragraph~\ref{par:groupRepeat} in more detail.
+
+\section{Embedding of Tokens}
+\label{sec:tokenEmbedding}
+
+\texttt{Non-terminal tokens} can be embedded in the definition part by using the name of the referenced \texttt{token}. The example in Listing~\ref{lst:embeddingTokens} embeds the \texttt{token} \enquote{Text} into the \texttt{START token}. \texttt{Token names} declared in the global scope of a format definition can be used throughout the format regardless of their declaration position. Terminal and non-terminal tokens can be mixed as illustrated in Listing~\ref{lst:mixedTokensExample}.
+
+\begin{listing}
+\caption{Example for embedding tokens}
+\label{lst:embeddingTokens}
+\begin{gocode}
+START = Text
+
+Text = "Some text"
+\end{gocode}
+\end{listing}
+
+\begin{listing}
+\caption{Example for terminal and non-terminal tokens mixed in one format}
+\label{lst:mixedTokensExample}
+\begin{gocode}
+Dot = "."
+
+First  = 1 Dot
+Second = 2 Dot
+Third  = 3 Dot
+
+START = First ", " Second " and " Third
+\end{gocode}
+\end{listing}
+
+The \textsc{Tavor framework} and therefore the \textsc{Tavor format} differentiate between a \texttt{token reference}, which is the embedding of a \texttt{token} in a definition, and a \texttt{token usage}, which is the execution of a \texttt{token} during an operation such as fuzzing or delta-debugging. Listing~\ref{lst:tokenUsageTokenReferenceExample} illustrates the difference between a \texttt{token reference} and a \texttt{token usage}. The format defines two \texttt{tokens} called \enquote{Choice} and \enquote{List}. There exists one \texttt{token reference} of \enquote{Choice}, which can be found in the \enquote{List} definition, and two for \enquote{List}, which are both in the \texttt{START token} definition. Although \enquote{Choice} is in a \texttt{repeat group}, which in this example repeats the token \enquote{Choice} exactly twice, it is only referenced once. \enquote{List} has two \texttt{token usages} in this format while \enquote{Choice} has 4. Every \enquote{List} \texttt{token} does have two \enquote{Choice} usages because of the \texttt{repeat group} in the definition of \enquote{List}.
+
+\begin{listing}
+\caption{Example for a token reference and a token usage}
+\label{lst:tokenUsageTokenReferenceExample}
+\begin{gocode}
+Choice = "a" | "b" | "c"
+
+List = +2(Choice)
+
+START = "1. list: " List "\n",
+        "2. list: " List "\n"
+\end{gocode}
+\end{listing}
+
+\section{Alternations}
+\label{sec:alternation}
+
+\texttt{Alternations} are defined by the pipe character \enquote{|} which separates two \texttt{alternation terms}. The example in Listing~\ref{lst:alternationExample} defines that the token \texttt{START} can either hold the strings \enquote{a}, \enquote{b} or \enquote{c}. An \texttt{alternation term} has its own scope which means that a sequence of \texttt{tokens} can be used.
+
+\begin{listing}
+\caption{Example for the alternation token}
+\label{lst:alternationExample}
+\begin{gocode}
+START = "a" | "b" | "c"
+\end{gocode}
+\end{listing}
+
+\texttt{Alternation terms} can be empty which allows more advanced definitions of formats. Listing~\ref{lst:alternationLoop} illustrates how to use an alternation to define a loop which can either hold the empty string or the strings \enquote{a}, \enquote{b}, \enquote{ab}, \enquote{aab} or any amount of \enquote{a} characters ending with an optional \enquote{b} character.
+
+\begin{listing}
+\caption{Example for loop using an alternation}
+\label{lst:alternationLoop}
+\begin{gocode}
+A = "a" A | B |
+B = "b"
+
+START = A
+\end{gocode}
+\end{listing}
+
+\section{Groups}
+\label{sec:groups}
+
+\texttt{Tokens} can be arranged using \texttt{token groups} by using parenthesis beginning with the opening parenthesis character \enquote{(} and ending with the closing parenthesis character \enquote{)}. A \texttt{group} is a \texttt{token} on its own and can be therefore mixed with other \texttt{tokens}. Additionally, a \texttt{group} starts a new scope between its parenthesis and can therefore hold a sequence of \texttt{tokens}. The \texttt{tokens} between the parenthesis are called the \texttt{group body}. Listing~\ref{lst:groupToken} illustrates the usage of a \texttt{token group} by declaring that the \texttt{START token} can either hold the string \enquote{a c} or \enquote{d c}. \texttt{Groups} can be nested as illustrated in Listing~\ref{lst:nestedGroups}, which defines a number with one to three digits. \texttt{Groups} can have modifiers which give a \texttt{group} additional abilities. The following sections introduces these modifiers.
+
+\begin{listing}
+\caption{Example for a group token}
+\label{lst:groupToken}
+\begin{gocode}
+START = ("a" | "d") " c"
+\end{gocode}
+\end{listing}
+
+\begin{listing}
+\caption{Example for nested groups}
+\label{lst:nestedGroups}
+\begin{gocode}
+Digit = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+
+START = Digit (Digit (Digit | ) | )
+\end{gocode}
+\end{listing}
+
+\paragraph{Optional group}
+\label{subsec:groupOptional}
+
+The \texttt{optional group} has the question mark \enquote{?} as modifier and allows the whole \texttt{group token} to be optional. The \texttt{START token} in Listing~\ref{lst:optionalGroup} can either hold the strings "a" or "a b".
+
+\begin{listing}
+\caption{Example for an optional group}
+\label{lst:optionalGroup}
+\begin{gocode}
+START = "a" ?(" b")
+\end{gocode}
+\end{listing}
+
+\paragraph{Repeat group}
+\label{par:groupRepeat}
+
+The default modifier for the \texttt{repeat group} is the plus character \enquote{+}. The repetition is executed by default at least once. In Listing~\ref{lst:groupRepeat} the string \enquote{a} is repeated and the \texttt{START token} can therefore hold any amount of \enquote{a} characters but at least one.
+
+\begin{listing}
+\caption{Example for a repeat group}
+\label{lst:groupRepeat}
+\begin{gocode}
+START = +("a")
+\end{gocode}
+\end{listing}
+
+Since repeated empty \texttt{tokens} lead to infinite steps during parsing and delta-debugging, a parsing error is issued if such \texttt{tokens} are encountered. This includes \texttt{optional groups} or \texttt{alternations} with at least one empty term inside a \texttt{Repeat Token}. The \texttt{repeat group} repeats by default from one to infinite times. The repetition can be altered with arguments to the modifier. Listing~\ref{lst:groupFixedRepeat} repeats the string \enquote{a} exactly twice. The \texttt{START token} can therefore only hold the string \enquote{aa}. It is also possible to define a repetition range. Listing~\ref{lst:groupRangedRepeat} repeats the string \enquote{a} at least twice but at most four times. This means that the \texttt{START token} can either hold the strings \enquote{aa}, \enquote{aaa} or \enquote{aaaa}. The \enquote{from} and \enquote{to} arguments can be empty too. They are then set to their default values. Listing~\ref{lst:groupEmptyFromArgumentRepeatGroup} repeats the string \enquote{a} at least once and at most four times. Listing~\ref{lst:groupEmptyToArgumentRepeatGroup} repeats the string \enquote{a} at least twice. Listing~\ref{lst:groupOptionalRepeat} illustrates the \texttt{optional repeat group} modifier. The \texttt{START token} can either hold the strings \enquote{a}, \enquote{ab}, \enquote{abb} or any amount of \enquote{b} characters prefixed by an "a" character.
+
+\begin{listing}
+\caption{Example for a fixed repeat group}
+\label{lst:groupFixedRepeat}
+\begin{gocode}
+START = +2("a")
+\end{gocode}
+\end{listing}
+
+\begin{listing}
+\caption{Example for a ranged repeat group}
+\label{lst:groupRangedRepeat}
+\begin{gocode}
+START = +2,4("a")
+\end{gocode}
+\end{listing}
+
+\begin{listing}
+\caption{Example for an empty ``from'' argument for a ranged repeat group}
+\label{lst:groupEmptyFromArgumentRepeatGroup}
+\begin{gocode}
+START = +,4("a")
+\end{gocode}
+\end{listing}
+
+\begin{listing}
+\caption{Example for an empty ``to'' argument for a ranged repeat group}
+\label{lst:groupEmptyToArgumentRepeatGroup}
+\begin{gocode}
+START = +2,("a")
+\end{gocode}
+\end{listing}
+
+\begin{listing}
+\caption{Example for an optional repeat group}
+\label{lst:groupOptionalRepeat}
+\begin{gocode}
+START = "a" *("b")
+\end{gocode}
+\end{listing}
+
+\paragraph{Permutation group}
+\label{subsec:groupPermutation}
+
+The \enquote{@} is the permutation modifier which is combined with an alternation in the group body. Each alternation term will be executed exactly once but the order of execution is non-relevant. In Listing~\ref{lst:groupPermutation} the \texttt{START token} can either hold \enquote{123}, \enquote{132}, \enquote{213}, \enquote{231}, \enquote{312} or \enquote{321}.
+
+\begin{listing}
+\caption{Example for a permutation group}
+\label{lst:groupPermutation}
+\begin{gocode}
+START = @(1 | 2 | 3)
+\end{gocode}
+\end{listing}
+
+\section{Character Classes}
+\label{sec:characterClasses}
+
+\texttt{Character class tokens} can be directly compared to character classes of regular expressions used in most programming languages. A \texttt{character class token} begins with the left bracket \enquote{[} and ends with the right bracket \enquote{]}. The content between the brackets is called a pattern and can consists of almost any UTF-8 encoded character, escape character, special escape character and range. In general the \texttt{character class token} can be seen as a shortcut for an \texttt{alternation}. The definition in Listing~\ref{lst:characterClassExample} illustrates the usage of a \texttt{character class} by defining that the \texttt{START token} holds either the strings \enquote{a}, \enquote{b} or \enquote{c}.
+
+\begin{listing}
+\caption{Example for a character class token}
+\label{lst:characterClassExample}
+\begin{gocode}
+START = [abc]
+\end{gocode}
+\end{listing}
+
+\paragraph{Escape Characters}
+\label{subsec:characterClassEscapeCharacters}
+
+Table~\ref{table:escapeCharacters} holds all \texttt{escape characters} which are UTF-8 encoded characters that are not directly allowed within a \texttt{character class} pattern. Their equivalent escape sequence has to be used instead. Listing~\ref{lst:escapeCharacterExample} defines that the \texttt{START token} can hold only white space characters.
+
+\begin{table}[H]
+\caption{Escape characters for character classes}
+\label{table:escapeCharacters}
+\center
+\begin{tabular}{| l | l |}
+\hline
+  \textbf{Character}
+& \textbf{Escape sequence}
+\tabularnewline
+\hline
+  \enquote{-}
+& \enquote{\textbackslash-}
+\tabularnewline
+\hline
+  \enquote{\textbackslash}
+& \enquote{\textbackslash\textbackslash}
+\tabularnewline
+\hline
+  form feed
+& \enquote{\textbackslash{}f}
+\tabularnewline
+\hline
+  newline
+& \enquote{\textbackslash{}n}
+\tabularnewline
+\hline
+  return
+& \enquote{\textbackslash{}r}
+\tabularnewline
+\hline
+  tab
+& \enquote{\textbackslash{}t}
+\tabularnewline
+\hline
+\end{tabular}
+\end{table}
+
+\begin{listing}
+\caption{Example for escape characters in character classes}
+\label{lst:escapeCharacterExample}
+\begin{gocode}
+START = +([ \t\n\r\f])
+\end{gocode}
+\end{listing}
+
+Since some characters can be hard to type and read the \enquote{\textbackslash{}x} escape sequence can be used to define them with their hexadecimal code points. Either only two hexadecimal characters are used in the form of \enquote{\textbackslash{}x0A} or when more then two hexadecimal digits are needed the form \enquote{\textbackslash{}x\string{0AF\string}} has to be used. The second form allows up to eight digits and is therefore fully Unicode ready. Unicode usage is illustrated in Listing~\ref{lst:hexadecimalCharacterClassExample}, which either holds the Unicode character \enquote{/} or \enquote{\smiley}.
+
+\begin{listing}
+\caption{Example for hexadecimal code points in character classes}
+\label{lst:hexadecimalCharacterClassExample}
+\begin{gocode}
+START = [\x2F\x{263A}]
+\end{gocode}
+\end{listing}
+
+\paragraph{Character Class Ranges}
+\label{subsec:characterClassRanges}
+
+\texttt{Character class ranges} can be defined using the \enquote{-} character. A \texttt{range} holds all characters defined by UTF-8 starting from the character before the \enquote{-} to ending at the character after the \enquote{-}. Both characters have to be either an UTF-8 encoded or an escaped character. The starting character must have a lower value than the ending character. The usage of \texttt{Character classes} is illustrated in Listing~\ref{lst:characterClassRange} which defines a number with one digit.
+
+\begin{listing}
+\caption{Example for a character class range}
+\label{lst:characterClassRange}
+\begin{gocode}
+START = [0-9]
+\end{gocode}
+\end{listing}
+
+\paragraph{Special Escape Characters}
+\label{subsec:specialEscapeCharacters}
+
+\texttt{Special escape characters} combine many characters into one \texttt{escape character}. Table~\ref{table:specialEscapeCharacters} lists all implemented \texttt{special escape characters}.
+
+\begin{table}[H]
+\caption{Special escape characters for character classes}
+\label{table:specialEscapeCharacters}
+\center
+\begin{tabular}{| l | l | l |}
+\hline
+  \textbf{Escape character}
+& \textbf{Character class}
+& \textbf{Description}
+\tabularnewline
+\hline
+  \enquote{\textbackslash{}d}
+& \enquote{[0-9]}
+& Holds a decimal digit character
+\tabularnewline
+\hline
+  \enquote{\textbackslash{}s}
+& \enquote{[ \textbackslash{}f\textbackslash{}n\textbackslash{}r\textbackslash{}t]}
+& Holds a white space character
+\tabularnewline
+\hline
+  \enquote{\textbackslash{}w}
+& \enquote{$[a-zA-Z0-9\textunderscore]$}
+& Holds a word character
+\tabularnewline
+\hline
+\end{tabular}
+\end{table}
+
+\section{Token Attributes}
+\label{sec:tokenAttributes}
+
+Some \texttt{tokens} define attributes which can be used in a definition by prefixing the dollar sign \enquote{\$} to their name and appending a dot followed by the attribute name. Listing~\ref{lst:tokenAttributeExample} illustrates \texttt{token attributes} using the \enquote{Count} attribute, which holds the count of the token's direct children. The format holds for example the string "The number 56 has 2 digits".
+
+\begin{listing}
+\caption{Example for a token attribute using the ``Count'' attribute}
+\label{lst:tokenAttributeExample}
+\begin{minted}[
+  mathescape,
+  linenos,
+  numbersep=5pt,
+  breaklines,
+  bgcolor=white,
+]{go}
+Number = +([0-9])
+START = "The number " Number " has " $Number.Count " digits"
+\end{minted}
+\end{listing}
+
+Some \texttt{token attributes} can have arguments. A \texttt{token argument list} begins with the opening parenthesis \enquote{(} and ends with the closing parenthesis \enquote{)}, and holds \enquote{token argument parameters} which are separated by commas. All \texttt{list tokens} have for example the \enquote{Item} attribute, which holds one child of the token. The \enquote{Item} attribute has one argument which is the index of the child starting from the index zero, and is illustrated in Listing~\ref{lst:tokenAttributeParameterExample}. The format holds the string "The letter with the index 1 is b".
+
+\begin{listing}
+\caption{Example for attribute parameters using the ``Item'' attribute}
+\label{lst:tokenAttributeParameterExample}
+\begin{minted}[
+  mathescape,
+  linenos,
+  numbersep=5pt,
+  breaklines,
+  bgcolor=white,
+]{go}
+Letters = "a" "b" "c"
+START = "The letter with the index 1 is " $Letters.Item(1)
+\end{minted}
+\end{listing}
+
+A \texttt{list token} is a \texttt{token} which has in its definition either only a sequence of \texttt{tokens} or exactly one \texttt{repeat group token}. Table~\ref{table:listTokenAttributes} shows the \texttt{token attributes} that can be utilized by \texttt{list tokens}.
+
+\begin{table}[H]
+\caption{Token attributes for list tokens}
+\label{table:listTokenAttributes}
+\center
+\begin{tabulary}{\textwidth}{| l | l | J |}
+\hline
+  \textbf{Attribute}
+& \textbf{Arguments}
+& \textbf{Description}
+\tabularnewline
+\hline
+  \enquote{Count}
+& -
+& Holds the count of the token's direct children.
+\tabularnewline
+\hline
+  \enquote{Item}
+& \enquote{i}
+& Holds a direct child of the token with the index \enquote{i}.
+\tabularnewline
+\hline
+  \enquote{Unique}
+& -
+& Chooses at random a direct child of the token and embeds it. The choice is unique for every reference of the token.
+\tabularnewline
+\hline
+\end{tabulary}
+\end{table}
+
+\paragraph{Scope of Attributes}
+\label{subsec:scopeOfAttributes}
+
+The \textsc{Tavor format} allows the usage of \texttt{token attributes} as long as the referenced \texttt{token} exists in the current scope.
+
+Two kinds of scopes exist: The \texttt{global scope} is the scope of the whole format definition. An entry of the \texttt{global scope} is set by the nearest child \texttt{token reference} to the \texttt{START token}. The \texttt{local scope} is the scope held by a definition, \texttt{group} or any other \texttt{token} which holds its own scope. \texttt{Local scopes} are initialized with entries from their parent scope at the time of the creation of the new \texttt{local scope}. Listing~\ref{lst:scopeExample} illustrates this behavior which can for example hold the string \enquote{1 a 1(1 aa 2)1 aaa 3}. The \texttt{List} token is used trice in this example. The first usage leads to the value \enquote{a}, the second to \enquote{aa} and the third to \enquote{aaa}. Depending on which list is visible in the current scope \enquote{\$List.Count} results in another value. This example showcases that the scope of token \texttt{Inner} is not visible in the scope of the \texttt{START token}.
+
+\begin{listing}
+\caption{Example for scopes}
+\label{lst:scopeExample}
+\begin{minted}[
+  mathescape,
+  linenos,
+  numbersep=5pt,
+  breaklines,
+  bgcolor=white,
+]{go}
+List = +,10("a")
+
+Inner = "(" $List.Count " " List " " $List.Count ")"
+
+START = $List.Count " " List " " $List.Count,
+        Inner,
+        $List.Count " " List " " $List.Count
+\end{minted}
+\end{listing}
+
+\section{Typed Tokens}
+\label{sec:typedTokens}
+
+\texttt{Typed tokens} are a functional addition to regular \texttt{token definitions} of the \textsc{Tavor format}. They provide specific functionality which can be utilized by embedding them like regular \texttt{tokens} or through their additional \texttt{token attributes}. \texttt{Typed tokens} can be defined by prefixing the dollar sign \enquote{\$} to their name. They do not have a format definition on their right-hand side. Instead, a type and optional arguments written as key-value pairs, which are separated by a colon, define the \texttt{token}. Listing~\ref{lst:typedTokenExample} illustrates \texttt{typed tokens} with the definition of an \texttt{integer token}. The format definitions holds additions with random integers as numbers such as \enquote{47245 + 6160 + 6137}.
+
+\begin{listing}
+\caption{Example typed token using an integer token}
+\label{lst:typedTokenExample}
+\begin{minted}[
+  mathescape,
+  linenos,
+  numbersep=5pt,
+  breaklines,
+  bgcolor=white,
+]{go}
+$Number Int
+
+Addition = Number " + " (Number | Addition)
+
+START = Addition
+\end{minted}
+\end{listing}
+
+The range of the \enquote{Int} type can be bounded using arguments for the definition as shown in Listing~\ref{lst:typedTokenAttributesExample}, where the \texttt{token} \enquote{Number} is an integer within the range one to ten.
+
+\begin{listing}
+\caption{Example for typed token attributes}
+\label{lst:typedTokenAttributesExample}
+\begin{minted}[
+  mathescape,
+  linenos,
+  numbersep=5pt,
+  breaklines,
+  bgcolor=white,
+]{go}
+$Number Int = from: 1,
+              to:   10
+
+Addition = Number " + " (Number | Addition)
+
+START = Addition
+\end{minted}
+\end{listing}
+
+\paragraph{Typed Token \texttt{Int}}
+\label{subsec:typedTokensInt}
+
+The \texttt{Int} type implements a random integer. Its optional \texttt{token arguments} are listed in Table~\ref{table:typedTokensIntOptionalArguments} and its \texttt{token attributes} are listed in Table~\ref{table:typedTokensIntArguments}.
+
+\begin{table}[H]
+\caption{Optional Token arguments for the ``Int'' typed token}
+\label{table:typedTokensIntOptionalArguments}
+\center
+\begin{tabular}{| l | l |}
+\hline
+  \textbf{Arguments}
+& \textbf{Description}
+\tabularnewline
+\hline
+  \enquote{from}
+& First integer value (defaults to 0)
+\tabularnewline
+\hline
+  \enquote{to}
+& Last integer value (defaults to $2^{31} - 1$)
+\tabularnewline
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\caption{Token attributes for the ``Int'' typed token}
+\label{table:typedTokensIntArguments}
+\center
+\begin{tabular}{| l | l | l |}
+\hline
+  \textbf{Attribute}
+& \textbf{Arguments}
+& \textbf{Description}
+\tabularnewline
+\hline
+  \enquote{Value}
+& -
+& Embeds a new token based on its parent
+\tabularnewline
+\hline
+\end{tabular}
+\end{table}
+
+\paragraph{Typed Token \texttt{Sequence}}
+\label{subsec:typedTokensSequence}
+
+The \texttt{Sequence} type implements a generator for integers. Its optional \texttt{token arguments} are listed in Table~\ref{table:typedTokensSequenceOptionalArguments} and its \texttt{token attributes} are listed in Table~\ref{table:typedTokensSequenceArguments}.
+
+\begin{table}[H]
+\caption{Optional Token arguments for the ``Sequence'' typed token}
+\label{table:typedTokensSequenceOptionalArguments}
+\center
+\begin{tabular}{| l | l |}
+\hline
+  \textbf{Arguments}
+& \textbf{Description}
+\tabularnewline
+\hline
+  \enquote{start}
+& First sequence value (defaults to 1)
+\tabularnewline
+\hline
+  \enquote{step}
+& Increment of the sequence (defaults to 1)
+\tabularnewline
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\caption{Token attributes for the ``Sequence'' typed token}
+\label{table:typedTokensSequenceArguments}
+\center
+\begin{tabulary}{\textwidth}{| l | l | J |}
+\hline
+  \textbf{Attribute}
+& \textbf{Arguments}
+& \textbf{Description}
+\tabularnewline
+\hline
+  \enquote{Existing}
+& -
+& Embeds a new token holding one existing value of the sequence
+\tabularnewline
+\hline
+  \enquote{Next}
+& -
+& Embeds a new token holding the next value of the sequence
+\tabularnewline
+\hline
+  \enquote{Reset}
+& -
+& Embeds a new token which on execution resets the sequence
+\tabularnewline
+\hline
+\end{tabulary}
+\end{table}
+
+\afterpage{\clearpage}
+
+\section{Expressions}
+\label{sec:expressions}
+
+\texttt{Expressions} can be used in \texttt{token definitions} and allow dynamic and complex operations using \texttt{operators} who can have different numbers of \texttt{operands}. An \texttt{expressions} starts with the dollar sign \enquote{\$} and the opening curly brace \enquote{\{} and ends with the closing curly brace \enquote{\}}. Listing~\ref{lst:expressionExample} illustrates the simplest expression which is an addition.
+
+\begin{listing}
+\caption{Example expression}
+\label{lst:expressionExample}
+\begin{minted}[
+  mathescape,
+  linenos,
+  numbersep=5pt,
+  breaklines,
+  bgcolor=white,
+]{go}
+START = ${1 + 2}
+\end{minted}
+\end{listing}
+
+Every \texttt{operand} of an \texttt{operator} can be a token. The usual dollar sign for a \texttt{token attribute} can be omitted inside an \texttt{expression} as illustrated in Listing~\ref{lst:tokenAttributeInExpression}.
+
+\begin{listing}
+\caption{Example for a token attribute inside an expression}
+\label{lst:tokenAttributeInExpression}
+\begin{minted}[
+  mathescape,
+  linenos,
+  numbersep=5pt,
+  breaklines,
+  bgcolor=white,
+]{go}
+$Number Int
+
+START = ${Number.Value + 1}
+\end{minted}
+\end{listing}
+
+
+\paragraph{Arithmetic Operators}
+\label{subsec:arithmeticOperators}
+
+\texttt{Arithmetic operators} which are shown in Table~\ref{table:arithmeticOperators} have two \texttt{operands} between the \texttt{operator} sign. \texttt{Operators} always embed the right side \texttt{operand} which means that that \enquote{2 * 3 + 4} will result in \enquote{2 * (3 + 4)} and not \enquote{(2 * 3) + 4}.
+
+\begin{table}[H]
+\caption{Arithmetic operators}
+\label{table:arithmeticOperators}
+\center
+\begin{tabular}{| l | l |}
+\hline
+  \textbf{Operator}
+& \textbf{Description}
+\tabularnewline
+\hline
+  \enquote{+}
+& Addition
+\tabularnewline
+\hline
+  \enquote{-}
+& Subtraction
+\tabularnewline
+\hline
+  \enquote{*}
+& Multiplication
+\tabularnewline
+\hline
+  \enquote{/}
+& Division
+\tabularnewline
+\hline
+\end{tabular}
+\end{table}
+
+\paragraph{Include Operator}
+\label{subsec:includeOperator}
+
+The \texttt{include operator} parses an external \textsc{Tavor format} file and includes its \texttt{START token}. It takes a string as its only \texttt{operand} which defines the file path of the to be included \textsc{Tavor format} file. The file path can be absolute or relative. Listing~\ref{lst:includeOperator} includes the \textsc{Tavor format} file \enquote{number.tavor}.
+
+\begin{listing}
+\caption{Example for include operator}
+\label{lst:includeOperator}
+\begin{minted}[
+  mathescape,
+  linenos,
+  numbersep=5pt,
+  breaklines,
+  bgcolor=white,
+]{go}
+START = ${include "number.tavor"}
+\end{minted}
+\end{listing}
+
+\paragraph{Path Operator}
+\label{subsec:pathOperator}
+
+The \texttt{path operator} traverses a \texttt{list token} based on the described structure. The structure defines the starting value of the traversal, the value which identifies each entry of the \texttt{list token}, how the entries are connected and which values are ending values for the traversal. The \texttt{path operator} has the format \enquote{path from (<starting value>) over (<entry identifier>) connected by (<entry connections>) without(<ending values>)}. All values are \texttt{expressions}. Furthermore, the \texttt{entry connections} and \texttt{ending values} are lists of \texttt{expressions}. The \texttt{entry identifier}, \texttt{entry connections} and \texttt{ending values} have the variable \enquote{e} in their scope which holds the currently traversed entry of the \texttt{list token}.
+
+Listing~\ref{lst:pathOperator} defines a list of connections called \enquote{Pairs}. Each entry in the list \enquote{Pairs} defines the identifier as its first \texttt{token} and the connection as its second \texttt{token}. The used \texttt{path operator} arguments define that all entries are traversed beginning from the value \enquote{2} and ending at the value \enquote{0}. The example holds the string \enquote{103123->231}.
+
+\begin{listing}
+\caption{Example for path operator}
+\label{lst:pathOperator}
+\begin{minted}[
+  mathescape,
+  linenos,
+  numbersep=5pt,
+  breaklines,
+  bgcolor=white,
+]{go}
+START = Pairs "->" Path
+
+Path = ${Pairs path from (2) over (e.Item(0)) connect by (e.Item(1)) without (0)}
+
+Pairs = (,
+	(1 0),
+	(3 1),
+	(2 3),
+)
+\end{minted}
+\end{listing}
+
+\paragraph{Not-in Operator}
+\label{subsec:notInOperators}
+
+The \texttt{not-in operator} queries the \enquote{Existing} \texttt{token attribute} of a sequence to not include the given list of \texttt{expressions}. A list of \texttt{expressions} begins with the opening parenthesis \enquote{(} and ends with the closing parenthesis \enquote{)}. Each \texttt{expression} is defined without the expression frame \enquote{\$\{...\}}. \texttt{Expressions} are separated by a comma. Listing~\ref{lst:notInOperator} illustrates the \texttt{not-in operator} by issuing two sequence entries and excluding the entry with the value \enquote{2}. The format therefore holds the string \enquote{1, 2 -> 1}.
+
+\begin{listing}
+\caption{Example for the not in operator}
+\label{lst:notInOperator}
+\begin{minted}[
+  mathescape,
+  linenos,
+  numbersep=5pt,
+  bgcolor=white,
+]{go}
+$Id Sequence
+
+START = $Id.Next ", " $Id.Next " -> " ${Id.Existing not in (2)}
+\end{minted}
+\end{listing}
+
+\section{Variables}
+\label{sec:variables}
+
+Every \texttt{token} of a \texttt{token definition} can be saved into a \texttt{variable} which consists of a name and a reference to a \texttt{token usage}. \texttt{Variables} follow the same scope rules as \texttt{token attributes}. It is therefore possible to, for example, define the same \texttt{variable name} more than once in one \texttt{token sequence}. They also do not overwrite \texttt{variable definitions} of parent scopes. \texttt{Variables} can be defined by using the \enquote{<} character after the \texttt{token} that should be saved, then defining the name of the \texttt{variable} and closing with the \enquote{>} character. \texttt{Variables} have a range of \texttt{token attributes} which are listed in Table~\ref{table:variableTokenAttributes}. Listing~\ref{lst:tokenVariable} illustrates the usage of \texttt{variables} by saving the \texttt{String Token} \enquote{text} into the \texttt{variable} \enquote{var}. The \texttt{token} \enquote{Print} uses this \texttt{variable} by embedding the referenced \texttt{token}. The format therefore holds the string \enquote{text->text}. \texttt{Tokens} which are saved to \texttt{variables} are by default relayed to the generation. This means that their usage generates data as usual. Since this is sometimes unwanted, an equal sign \enquote{=} after the \enquote{<} character can be used to omit the relay.
+
+\begin{listing}
+\caption{Example for a token variable}
+\label{lst:tokenVariable}
+\begin{minted}[
+  mathescape,
+  linenos,
+  numbersep=5pt,
+  bgcolor=white,
+]{go}
+START = "text"<var> "->" Print
+
+Print = $var.Value
+\end{minted}
+\end{listing}
+
+\begin{table}[H]
+\caption{Token attributes of variable tokens}
+\label{table:variableTokenAttributes}
+\center
+\begin{tabulary}{\textwidth}{| l | l | J |}
+\hline
+  \textbf{Attribute}
+& \textbf{Arguments}
+& \textbf{Description}
+\tabularnewline
+\hline
+  \enquote{Count}
+& -
+& Holds the count of the referenced token's direct child
+\tabularnewline
+\hline
+  \enquote{Index}
+& -
+& Holds the index of the referenced token in relation to its parent
+\tabularnewline
+\hline
+  \enquote{Item}
+& \enquote{i}
+& Holds a child of the referenced token with the index \enquote{i}
+\tabularnewline
+\hline
+  \enquote{Reference}
+& -
+& Holds a reference to a token which is needed for some operators
+\tabularnewline
+\hline
+  \enquote{Value}
+& -
+& Embeds a new token based on the referenced token
+\tabularnewline
+\hline
+\end{tabulary}
+\end{table}
+
+\section{Statements}
+\label{sec:statements}
+
+\texttt{Statements} allow the \textsc{Tavor format} to have a control flow in its \texttt{token definitions} depending on the used tokens and values. All \texttt{statements} start with the opening curly brace \enquote{\{} and end with closing curly brace \enquote{\}}. The \texttt{statement operator} must be defined right after the closing curly brace.
+
+The \texttt{if statement} allows to embed conditions into \texttt{token definitions} and defines an \texttt{if body} which is a scope on its own. The \texttt{token body} lies between an opening \texttt{\{if <condition>\}} \texttt{statement} and an ending \texttt{\{endif\}} \texttt{statement}. The condition can be formed using the \texttt{if statement's operators} which are listed in Table~\ref{table:ifOperators}. Each \texttt{if body} creates a new scope. Listing~\ref{lst:ifStatement} illustrates the \texttt{if statement} by generating the character \enquote{A} only if the variable \enquote{var} is equal to \enquote{1}.
+
+\begin{table}
+\caption{Operators for the if statement condition}
+\label{table:ifOperators}
+\center
+\begin{tabulary}{\textwidth}{| l | l | J |}
+\hline
+  \textbf{Operator}
+& \textbf{Usage}
+& \textbf{Description}
+\tabularnewline
+\hline
+  \enquote{==}
+& \enquote{<token> == <token>}
+& Returns true if the value of op1 is equal to op2
+\tabularnewline
+\hline
+  \enquote{defined}
+& \enquote{defined <name>}
+& Returns true if name is a defined variable
+\tabularnewline
+\hline
+\end{tabulary}
+\end{table}
+
+\begin{listing}
+\caption{Example for the if statement}
+\label{lst:ifStatement}
+\begin{gocode}
+Choose = 1 | 2 | 3
+
+START = Choose<var> "->" {if var.Value == 1}"A"{endif}
+\end{gocode}
+\end{listing}
+
+Additional to the \texttt{if statement}, the statements \texttt{else} and \texttt{else if} can be used. They can only be defined inside an \texttt{if body} and always belong to the \texttt{if statement} that the body belongs to. Both statement operators create a new \texttt{if body}.

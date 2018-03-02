@@ -1,0 +1,247 @@
+\documentclass[11pt,a4paper,titlepage,
+chapterprefix,headsepline,parskip,pdftex,
+,pointlessnumbers,bibtotoc]{scrbook}
+
+%%% Absätze bei tieferen Ebenen einschalten
+\makeatletter %% Sonderbedeutung von @ aufheben
+\renewcommand{\paragraph}{\@startsection
+   {paragraph} % name
+   {4} % ebene
+   {0mm} % einzug
+   {-\baselineskip} % vorabstand
+   {0.1\baselineskip} % nachabstand
+   {\normalfont\normalsize\bfseries}} % stil
+\makeatother %% Sonderbedeutung von @ wieder
+
+\makeatletter %% Sonderbedeutung von @ aufheben
+\renewcommand{\subparagraph}{\@startsection
+   {subparagraph} % name
+   {5} % ebene
+   {0mm} % einzug
+   {-\baselineskip} % vorabstand
+   {0.1\baselineskip} % nachabstand
+   {\normalfont\normalsize\bfseries}} % stil
+\makeatother %% Sonderbedeutung von @ wieder
+
+\usepackage{setspace}
+\onehalfspacing
+
+\usepackage[pdftex]{graphicx}
+
+%my imports:
+\usepackage{subfig}
+\usepackage{afterpage}
+\usepackage{algorithmic}
+\usepackage[para,online,flushleft]{threeparttable} % Custom captions under/above floats in tables or figures.
+\usepackage[chapter]{algorithm}
+\usepackage{mathtools}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{boxedminipage}
+\usepackage{framed}
+\usepackage{amssymb}
+\usepackage{amsmath} % Includes \nobreakdash and other stuff.
+\usepackage{tabulary}
+\usepackage[pdftex]{colortbl}
+%my theorems:
+%\newtheorem{definition}{Definition}
+\newtheorem{definition}{Definition}
+\numberwithin{definition}{chapter}
+
+% for colours
+\usepackage[pdftex]{color}
+
+\usepackage[colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    pagecolor=blue,
+    urlcolor=blue,
+    breaklinks=true,
+    bookmarksnumbered=true,
+    hypertexnames=false,
+    pdfpagemode=UseOutlines,
+    pdfview=FitH,
+    plainpages=false,
+    pdfpagelabels,
+    bookmarks=true,
+    linktocpage=true]{hyperref}
+
+
+% To-Do Befehl
+\newcommand{\todo}[1]{\textcolor{red}{\textbf{To-Do:} #1}}
+
+% Interner-Link-Befehl
+\newcommand{\internerLink}[1]{\hyperref[#1]
+{Siehe \ref*{#1}~\nameref{#1} auf S.~\pageref{#1}}}
+
+% Interner-Link-Befehl 2
+\newcommand{\ffinternerLink}[1]{\hyperref[#1]
+{Siehe S.~\pageref{#1}ff}}
+
+% Interner-Link-Befehl x
+\newcommand{\xinternerLink}[1]{\hyperref[#1]
+{\ref*{#1}~\nameref{#1} auf S.~\pageref{#1}}}
+
+
+%%% continous footnote
+\newcounter{cfootnotecounter}
+\newcommand{\cfootnote}[1]{\stepcounter{cfootnotecounter}
+\footnote[\value{cfootnotecounter}]{#1}}
+
+%%% Bild Befehle
+\newcommand{\bild}[3]{\begin{figure}[htb] \begin{center}
+\includegraphics{#1}
+\caption{#2} \label{#3} \end{center} \end{figure}}
+
+\newcommand{\bildTabelle}[3]{\begin{table}[htb] \begin{center}
+\includegraphics{#1}
+\caption{#2} \label{#3} \end{center} \end{table}}
+
+\newcommand{\bildE}[5]{\begin{figure}[hb] \begin{center}
+\includegraphics[height=#2, angle=#3]{#1}
+\caption{#4} \label{#5} \end{center} \end{figure}}
+
+\newcommand{\tabelle}[3]{\begin{table}[htb] \begin{center}
+\input{#1}
+\caption{#2} \label{#3} \end{center} \end{table}}
+
+\flushbottom
+
+% change page settings
+\setlength{\hoffset}{0mm} \setlength{\voffset}{0mm}
+% \setlength{\evensidemargin}{14.6mm}
+% \setlength{\oddsidemargin}{14.6mm}
+\setlength{\topmargin}{-20mm}
+\setlength{\headheight}{15mm} \setlength{\headsep}{9mm}
+\setlength{\textheight}{242mm} \setlength{\textwidth}{145mm}
+\setlength{\footskip}{10mm}
+%%% Nachfolgendes nicht notwendig wg. Klassenoption parskip
+%\setlength{\parskip}{3ex plus0.5ex minus0.5ex}
+%\setlength{\parindent}{0mm}
+
+%%% Abstände von float-Umgebungen
+% \setlength{\textfloatsep}{25pt plus5pt minus5pt}
+% \setlength{\intextsep}{25pt plus5pt minus5pt}
+
+%%% Gliederungs-Nummern in den Rand schreiben
+\renewcommand*{\othersectionlevelsformat}[1]{%
+\llap{\csname the#1\endcsname\autodot\enskip}}
+
+%%% In Kopfzeile nur Kapitel-Text ohne "Kapitel x"
+\renewcommand*{\chaptermarkformat}{}
+
+%%% Formatierung von chapter ändern
+\setkomafont{chapter}{\Huge}
+\RedeclareSectionCommand[beforeskip=50pt]{chapter}
+\renewcommand*{\chapterformat}{\LARGE{\chapappifchapterprefix{\ }\thechapter\autodot\enskip}}
+
+%%% Kopfzeile
+\usepackage[automark]{scrpage2}
+
+\clearscrheadings \clearscrplain \clearscrheadfoot
+\pagestyle{scrheadings}
+\ohead{\pagemark}
+\ihead{\headmark}
+\cfoot{}
+
+%%% Formatierung von Kapitel-Seiten
+\renewcommand*{\chapterpagestyle}{scrheadings}
+
+%% Gliederung TOC und Nummerierungstiefe
+\setcounter{tocdepth}{\subsubsectionlevel}
+\setcounter{secnumdepth}{\subsubsectionlevel}
+
+%%% Schriftarten
+\addtokomafont{chapter}{\sffamily}
+\addtokomafont{sectioning}{\rmfamily}
+
+% Sprache
+\usepackage[german,english]{babel}
+% Verwenden von T1 Fonts
+\usepackage[T1]{fontenc}
+% Eingabe von Umlauten
+\usepackage[utf8x]{inputenc}
+\usepackage{ae}
+
+% URLs
+\usepackage{url}
+
+%%% Schusterjungen und Hurenkinder
+\clubpenalty = 10000
+\widowpenalty = 10000 \displaywidowpenalty = 10000
+
+
+%%% Einbinden von kompletten PDF-Seiten
+\usepackage{pdfpages}
+
+% Quotes
+\usepackage{csquotes}
+
+% Source code highlighting
+\usepackage{xcolor}
+\usepackage{minted} % The background color is NEEDED because otherwise there is no margin-top for the frame
+\renewcommand\theFancyVerbLine{\small\arabic{FancyVerbLine}}
+\newminted{bash}{
+  linenos,
+  numbersep=5pt,
+  breaklines,
+  bgcolor=white,
+}
+\newminted{diff}{
+  linenos,
+  numbersep=5pt,
+  breaklines,
+  bgcolor=white,
+}
+\newminted{go}{
+  linenos,
+  numbersep=5pt,
+  breaklines,
+  tabsize=4,
+  bgcolor=white,
+}
+\newminted{text}{
+  linenos,
+  numbersep=5pt,
+  breaklines,
+  bgcolor=white,
+}
+\newminted{xml}{
+  linenos,
+  numbersep=5pt,
+  breaklines,
+  bgcolor=white,
+}
+\AtBeginEnvironment{minted}{\renewcommand{\fcolorbox}[4][]{#4}} % Ignore syntax errors
+
+% Smiley, because I cannot enter unicode code points into Latex...
+\usepackage{wasysym}
+
+% For left, right and center attributes of includegraphics
+\usepackage[export]{adjustbox}
+
+% Landscape pages
+\usepackage{lscape}
+
+% Headers, captions, ... with title case.
+\usepackage{titlecaps}
+
+% \let\nottitlecapsection=\chapter % The chapter command does not work with this trick and I have no time to fix it.
+% \def\chapter#1{\nottitlecapchapter{\titlecap{#1}}}
+\let\nottitlecapsection=\section
+\def\section#1{\nottitlecapsection{\titlecap{#1}}}
+\let\nottitlecapsubsection=\subsection
+\def\subsection#1{\nottitlecapsubsection{\titlecap{#1}}}
+\let\nottitlecapcaption=\caption
+\def\caption#1{\nottitlecapcaption{\titlecap{#1}}}
+
+\Addlcwords{a an and at but by for from in nor of on or the to}
+
+% Center every figure and table.
+\makeatletter
+\g@addto@macro\@floatboxreset\centering
+\makeatother
+
+\tolerance=2000                 % Zur Vermeidung von "overfull hbox"
+\emergencystretch 20pt          % " besser als sloppy

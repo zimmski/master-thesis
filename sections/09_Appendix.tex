@@ -1,0 +1,286 @@
+\appendix
+
+\chapter{Tavor Framework Pseudo Codes}
+\label{chapter:AppendixTavorFramework}
+
+\begin{listing}
+\caption{Pseudo Code of AllPermutations fuzzing strategy}
+\label{lst:pseudo-code-all-perm-strat}
+\begin{gocode}
+func fuzz(contin chan struct{}, list []permLevel) {
+Step:
+	for {
+		if len(list[0].children) > 0 {
+			fuzz(contin, list[0].children)
+		} else {
+			reportPermutation(contin)
+		}
+
+		list[0].perm++
+
+		if list[0].perm >= list[0].token.Permutations(){
+			for i:=1; i < len(list); i++ {
+				incremented := incrementChild(list[i].children)
+				if incremented {
+					resetTokensBeforeIndex(list, i)
+					continue Step
+				}
+
+				list[i].perm++
+
+				if list[i].perm < list[i].token.Permutations() {
+					resetTokensBeforeIndex(list, i)
+					setEntry(list, i)
+					continue Step
+				}
+			}
+			break Step
+		} else {
+			setToken(list, 0)
+		}
+	}
+}
+\end{gocode}
+\end{listing}
+
+\begin{listing}
+\caption{Pseudo Code of AllPermutations fuzzing strategy Helper Function}
+\label{lst:pseudo-code-all-perm-strat-helper}
+\begin{gocode}
+func incOne(list []permLevel) bool {
+	for {
+		if len(list[0].children) > 0 {
+			if incOne(list[0].children) {
+				return true
+			}
+		}
+
+		list[0].perm++
+
+		if list[0].perm >= list[0].token.Permutations(){
+			for i:=1; i < len(list); i++ {
+				if incrementChild(list[i].children) {
+					resetTokensBeforeIndex(list, i)
+
+					return true
+				}
+
+				list[i].perm++
+
+				if list[i].perm < list[i].token.Permutations() {
+					resetTokensBeforeIndex(list, i)
+					setEntry(list, i)
+
+					return true
+				}
+			}
+			break Step
+		} else {
+			setToken(list, 0)
+
+			return true
+		}
+	}
+
+	return true
+}
+\end{gocode}
+\end{listing}
+
+\chapter{Tavor CLI Command Line Arguments}
+\label{chapter:AppendixTavorCLI}
+
+\begin{listing}
+\caption{General arguments of the Tavor CLI}
+\label{lst:tavor-cli-general-arguments}
+\begin{textcode}
+General options:
+  --debug             Debug log output
+  --help              Show this help message
+  --verbose           Verbose log output
+  --version           Print the version of this program
+
+Global options:
+  --seed=             Seed for all the randomness
+  --max-repeat=       How many times loops and repetitions should be repeated (default: 2)
+
+Format file options:
+  --check             Checks the syntax of the format file and exits
+  --format-file=      Input Tavor format file
+  --print             Prints the AST of the parsed format file and exits
+  --print-internal    Prints the internal AST of the parsed format file and exits
+\end{textcode}
+\end{listing}
+
+\begin{listing}
+\caption{Arguments for \texttt{validate} the command of the Tavor CLI}
+\label{lst:tavor-cli-validate-options}
+\begin{textcode}
+[validate command options]
+      --input-file=   Input file which gets parsed and validated via the format file
+\end{textcode}
+\end{listing}
+
+\begin{listing}
+\caption{Example DOT format for the \texttt{graph} command}
+\label{lst:tavor-cli-graph-example-dot}
+\begin{textcode}
+digraph Graphing {
+  node [peripheries = 2]; xc4200e7810 xc4200e75b0; node [peripheries = 1];
+  node [shape = point] START;
+  node [shape = point] xc4200e7800;
+  node [shape = point] xc4200e7810;
+  node [shape = ellipse];
+
+  xc4200e75b0 [label="f"]
+  xc4200e7470 [label="a"]
+  xc4200e74b0 [label="b"]
+  xc4200e74f0 [label="c"]
+  xc4200e7800 [label=""]
+  xc4200e7810 [label=""]
+  xc4200e7530 [label="d"]
+  xc4200e7570 [label="e"]
+
+  START -> xc4200e7470;
+  xc4200e7470 -> xc4200e74b0[ style=dotted];
+  xc4200e7470 -> xc4200e74f0;
+  xc4200e74b0 -> xc4200e74f0[ style=dotted];
+  xc4200e7530 -> xc4200e7570;
+  xc4200e7800 -> xc4200e7530;
+  xc4200e7570 -> xc4200e7810;
+  xc4200e7810 -> xc4200e7800[ label="2-4x"];
+  xc4200e74f0 -> xc4200e7800;
+  xc4200e7810 -> xc4200e75b0[ style=dotted];
+}
+\end{textcode}
+\end{listing}
+
+\begin{landscape}
+\begin{listing}
+\caption{Arguments for the \texttt{fuzz} command of the Tavor CLI}
+\label{lst:tavor-cli-fuzz-options}
+\begin{textcode}
+[fuzz command options]
+      --exec=                                    Execute this binary with possible arguments to test a generation
+      --exec-exact-exit-code=                    Same exit code has to be present (default: -1)
+      --exec-exact-stderr=                       Same stderr output has to be present
+      --exec-exact-stdout=                       Same stdout output has to be present
+      --exec-match-stderr=                       Searches through stderr via the given regex. A match has to be present
+      --exec-match-stdout=                       Searches through stdout via the given regex. A match has to be present
+      --exec-do-not-remove-tmp-files             If set, tmp files are not removed
+      --exec-do-not-remove-tmp-files-on-error    If set, tmp files are not removed on error
+      --exec-argument-type=                      How the generation is given to the binary (default: stdin)
+      --list-exec-argument-types                 List all available exec argument types
+      --script=                                  Execute this binary which gets fed with the generation and should return feedback
+      --exit-on-error                            Exit if an execution fails
+      --filter=                                  Fuzzing filter to apply
+      --list-filters                             List all available fuzzing filters
+      --strategy=                                The fuzzing strategy (default: random)
+      --list-strategies                          List all available fuzzing strategies
+      --result-folder=                           Save every fuzzing result with the MD5 checksum as filename in this folder
+      --result-extension=                        If result-folder is used this will be the extension of every filename
+      --result-separator=                        Separates result outputs of each fuzzing step (default: "\n")
+
+\end{textcode}
+\end{listing}
+\end{landscape}
+
+\begin{landscape}
+\begin{listing}
+\caption{Arguments for the \texttt{reduce} command of the Tavor CLI}
+\label{lst:tavor-cli-reduce-options}
+\begin{textcode}
+[reduce command options]
+      --exec=                           Execute this binary with possible arguments to test a generation
+      --exec-exact-exit-code            Same exit code has to be present
+      --exec-exact-stderr               Same stderr output has to be present
+      --exec-exact-stdout               Same stdout output has to be present
+      --exec-match-stderr=              Searches through stderr via the given regex. A match has to be present
+      --exec-match-stdout=              Searches through stdout via the given regex. A match has to be present
+      --exec-do-not-remove-tmp-files    If set, tmp files are not removed
+      --exec-argument-type=             How the generation is given to the binary (default: stdin)
+      --list-exec-argument-types        List all available exec argument types
+      --script=                         Execute this binary which gets fed with the generation and should return feedback
+      --input-file=                     Input file which gets parsed, validated and delta-debugged via the format file
+      --strategy=                       The reducing strategy (default: Linear)
+      --list-strategies                 List all available reducing strategies
+      --result-separator=               Separates result outputs of each reducing step (default: "\n")
+
+\end{textcode}
+\end{listing}
+\end{landscape}
+
+\begin{listing}
+\caption{Arguments for the \texttt{graph} command of the Tavor CLI}
+\label{lst:tavor-cli-graph-arguments}
+\begin{textcode}
+[graph command options]
+      --filter=         Fuzzing filter to apply
+      --list-filters    List all available fuzzing filters
+\end{textcode}
+\end{listing}
+
+\chapter{Case Study: Coin Vending Machine}
+\label{chapter:coinVendingMachine}
+
+\begin{listing}
+\caption{Semi Automated Delta-Debugging of Coin Vending Machine Case Study}
+\label{lst:semi-automated-delta-debug-vending-machine}
+\begin{textcode}
+credit  0
+
+Do the constraints of the original input still hold for this generation? [yes|no]: no
+credit  0
+coin    50
+credit  50
+coin    50
+credit  100
+vend
+credit  0
+
+Do the constraints of the original input still hold for this generation? [yes|no]: no
+credit  0
+coin    50
+credit  50
+coin    25
+credit  75
+coin    25
+credit  100
+vend
+credit  0
+
+Do the constraints of the original input still hold for this generation? [yes|no]: yes
+\end{textcode}
+\end{listing}
+
+
+\begin{listing}
+\caption{Partial Log of Applying \textsc{go-mutesting} for the Coin Vending Machine Case Study}
+\label{lst:mutation-testing-vending-machine}
+\begin{textcode}
+PASS "/tmp/go-mutesting-291931067//home/zimmski/go/src/coin/implementation.go.0" with checksum 59ff7a970964f4a5bdaaac92d09b8600
+PASS "/tmp/go-mutesting-291931067//home/zimmski/go/src/coin/implementation.go.1" with checksum 9bc8a0e74dd28e7377aec58c336d0852
+--- /home/zimmski/go/src/coin/implementation.go 2017-11-22 11:33:03.020149906 +0100
++++ /tmp/go-mutesting-291931067//home/zimmski/go/src/coin/implementation.go.2   2017-11-22 11:39:25.736642702 +0100
+@@ -39,7 +39,8 @@
+        case coin50:
+                v.credit += credit
+        default:
+-               return ErrUnknownCoin
++               _ = ErrUnknownCoin
+        }
+        return nil
+FAIL "/tmp/go-mutesting-291931067//home/zimmski/go/src/coin/implementation.go.2" with checksum 355ad77c0828056fde05b28d923e440c
+--- /home/zimmski/go/src/coin/implementation.go 2017-11-22 11:33:03.020149906 +0100
++++ /tmp/go-mutesting-291931067//home/zimmski/go/src/coin/implementation.go.3   2017-11-22 11:39:26.040652417 +0100
+@@ -48,7 +48,7 @@
+ // Vend executes a vend of the machine if enough credit (100) has been put in and returns true.
+ func (v *VendingMachine) Vend() bool {
+        if v.credit < 100 {
+-               return false
+        }
+        v.credit -= 100
+FAIL "/tmp/go-mutesting-291931067//home/zimmski/go/src/coin/implementation.go.3" with checksum 9bf76c4dd255f2c388659111af37a790
+PASS "/tmp/go-mutesting-291931067//home/zimmski/go/src/coin/implementation.go.6" with checksum a42a707de248e2cda066676e24484c6b
+\end{textcode}
+\end{listing}

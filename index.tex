@@ -1,0 +1,53 @@
+\input{headers}
+
+% The actual document
+
+\usepackage{hyperref}
+\hypersetup{
+	pdftitle={Tavor - A Generic Fuzzing and Delta-Debugging Framework},
+	pdfsubject={Tavor - A Generic Fuzzing and Delta-Debugging Framework},
+	pdfauthor={Markus Zimmermann, BSc},
+	pdfkeywords={Tavor Fuzzing Delta-Debugging Model-Based Testing Keyword-Driven Testing}
+}
+
+\begin{document}
+
+% Cover
+\includepdf{00-cover-sheet/index.pdf}
+\includepdf{00-empty-page/index.pdf}
+
+% Precontent
+\pagenumbering{Roman}
+
+\include{sections/00_Abstract}
+\include{sections/00_Abstract-german}
+
+\tableofcontents
+
+% Content
+\newpage
+\pagenumbering{arabic}
+
+\input{sections/01_Introduction}
+\input{sections/02_Background}
+\input{sections/03_Tavor-Framework}
+\input{sections/04_Tavor-Format}
+\input{sections/05_Tavor-CLI}
+\input{sections/06_go-mutesting}
+\input{sections/07_Evaluation}
+\input{sections/08_Conclusion}
+\input{sections/09_Appendix}
+
+\listoffigures
+\listoflistings
+\listoftables
+
+% Appendix
+\bibliographystyle{references-style}
+\nocite{*}
+\bibliography{references}
+
+\includepdf{00-cv/index.pdf}
+\includepdf{00-eidesstattliche-erklaerung/index.pdf}
+
+\end{document}

@@ -1,0 +1,64 @@
+/*
+
+JSON tavor format based on https://tools.ietf.org/html/rfc7159
+
+*/
+
+START = Value
+
+Array = WS beginArray,
+          ?(,
+             Value,
+             *(valueSeparator Value),
+           ),
+        endArray WS
+
+Object = WS beginObject,
+           ?(,
+              Member,
+              *(valueSeparator Member),
+            ),
+         endObject WS
+
+Member = WS String WS, // Member name, should be unique per object
+         nameSeparator,
+         Value
+
+Number = WS ?("-") (0 | [1-9]*([0-9])) ?("." +([0-9])) ?([eE] ?("-" | "+") +([0-9])) WS
+
+String = WS "\"" *(Char) "\"" WS
+
+Char = CharUnescaped | CharEscaped
+CharUnescaped = [\x20-\x21] | [\x23-\x5B] | [\x5D-\x{10FFFF}] // 10FFFF -> 21bit of unicode
+CharEscaped = "\\" (,
+                     "\"", // quotation mark
+                   | "\\", // reverse solidus
+                   | "/", // solidus
+                   | "b", // backspace
+                   | "f", // form feed
+                   | "n", // line feed
+                   | "r", // carriage return
+                   | "t", // tab
+                   | "u" +4([a-fA-F0-9]), // 4 hex digits
+                   )
+
+Value = (,
+          Object,
+        | Array,
+        | Number,
+        | String,
+        | WS "false" WS, // must be lower case
+        | WS "null"  WS, // must be lower case
+        | WS "true"  WS, // must be lower case
+        )
+
+// Helper
+
+beginArray     = "["
+beginObject    = "{"
+endArray       = "]"
+endObject      = "}"
+nameSeparator  = ":"
+valueSeparator = ","
+
+WS = *([ \t\n\r])

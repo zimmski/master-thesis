@@ -1,0 +1,12 @@
+\begin{otherlanguage}{german}
+
+\chapter*{Kurzfassung}
+\markright{Kurzfassung}
+
+Das Testen von Software um ihre Korrektheit zu überprüfen und das Debuggen von Source Code zum Finden und Korrigieren von Fehlern sind zwei wichtige Tätigkeiten, die von jedem Softwareentwickler gemeistert werden müssen. Mit ansteigender Komplexität von Software werden diese Tätigkeiten jedoch zunehmend kompliziert und mühsam. Es ist daher nötig Herangehensweisen anzuwenden, welche diese Tätigkeiten vereinfachen. Fuzzing und Delta-Debugging sind zwei dem Zeitgeist entsprechende automatisierte Techniken, für die systematische Generierung und Reduzierung von Testdaten. Die meisten Implementierungen von Fuzzing und Delta-Debugging erlauben jedoch nur die Anwendung einer dieser Techniken anhand eines fest programmierten Datenmodells, oder repräsentieren komplizierte Frameworks zur Anwendung von Fuzzing denen es an Benutzerfreundlichkeit fehlt.
+
+Diese Arbeit stellt \textsc{Tavor} vor, ein Framework und Tool für die gleichzeitige Anwendung von Fuzzing und Delta-Debugging anhand benutzerdefinierter Datenmodelle, und das \textsc{Tavor Format}, einer EBNF-ähnlichen Notation zur Definition von Datenmodellen für Dateiformate, Protokolle und Testfälle. Zusammen erlauben sie die grundlegende Anwendung von Fuzzing und Delta-Debugging ohne das Voraussetzen von Programmierkenntnissen, wodurch diese Techniken auch für Nicht-Experten zugänglich gemacht werden. Zusätzlich präsentiert diese Arbeit alle nötigen Datenstrukturen, Schnittstellen und Algorithmen welche für diese Kombination von Fuzzing und Delta-Debugging nötig sind.
+
+Ein Teil unserer Evaluierung ist der Vergleich von \textsc{Tavor}s Fuzzing-Fähigkeiten mit \emph{aigfuzz}, einem dedizierten Fuzzer für das anspruchsvolle AIGER-Format. Insgesamt wurden 16 Befehle vom AIGER-Toolset evaluiert, um die generierten Testsets zu vergleichen. Durchschnittlich erreichte die \emph{random} Fuzzing-Strategie vom \textsc{Tavor Framework} \texttt{9.16\%} mehr Line-Coverage als \emph{aigfuzz}. Das beste Ergebnis wurde für den Befehl \emph{aigunroll} erzielt, für den \emph{aigfuzz} \texttt{24.08\%} Abdeckung erzielt und \textsc{Tavor}s \emph{AlmostAllPermutations} Fuzzing-Strategie sogar \texttt{61.36\%} erreichte. Zusammenfassend lässt sich durch diese Evaluierung sagen, dass \textsc{Tavor} als generischer Fuzzer mit einer dedizierten Fuzzing-Implementierung mithalten kann.
+
+\end{otherlanguage}
